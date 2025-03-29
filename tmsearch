@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Get user home directory
+HOME_DIR="$HOME"
+
+# Use fzf to select a file/folder inside the home directory
+TARGET=$(find "$HOME_DIR" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | fzf --height 40% --reverse)
+
+# Exit if no selection was made
+[ -z "$TARGET" ] && exit 1
+
+# Extract directory name to use as session name
+SESSION_NAME=$(basename "$TARGET")
+
+# Ensure unique session name by appending a number if needed
+COUNT=1
+ORIGINAL_NAME="$SESSION_NAME"
+while tmux has-session -t "$SESSION_NAME" 2>/dev/null; do
+    SESSION_NAME="${ORIGINAL_NAME}_$COUNT"
+    ((COUNT++))
+done
+
+# Start tmux session with first window running nvim .
+tmux new-session -d -s "$SESSION_NAME" -c "$TARGET" 'nvim .'
+
+# Add a second window
+tmux new-window -t "$SESSION_NAME" -c "$TARGET"
+
+# Check if inside tmux
+if [ -n "$TMUX" ]; then
+    # Switch to the new session
+    tmux switch-client -t "$SESSION_NAME"
+else
+    # Attach if not inside tmux
+    tmux attach-session -t "$SESSION_NAME"
+fi
+
