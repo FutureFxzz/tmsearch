@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# Function to detect and open a terminal
+open_terminal() {
+    local terminal_cmd=""
+
+    # Detect available terminal emulator
+    if command -v gnome-terminal >/dev/null 2>&1; then
+        terminal_cmd="gnome-terminal -- bash -c \"$0\""
+    elif command -v xfce4-terminal >/dev/null 2>&1; then
+        terminal_cmd="xfce4-terminal -e \"$0\""
+    elif command -v konsole >/dev/null 2>&1; then
+        terminal_cmd="konsole -e bash -c \"$0\""
+    elif command -v alacritty >/dev/null 2>&1; then
+        terminal_cmd="alacritty -e bash -c \"$0\""
+    elif command -v x-terminal-emulator >/dev/null 2>&1; then
+        terminal_cmd="x-terminal-emulator -e bash -c \"$0\""
+    else
+        echo "No suitable terminal emulator found!"
+        exit 1
+    fi
+
+    # Open terminal and exit script
+    eval "$terminal_cmd" &
+    exit 0
+}
+
+# Check if we are in a terminal
+if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
+    open_terminal
+fi
+
 # Get user home directory
 HOME_DIR="$HOME"
 
